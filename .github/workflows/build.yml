@@ -65,50 +65,28 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
     
-    - name: Create icon
+    - name: Check icon files
       run: |
-        python -c "
-        try:
-            from PIL import Image, ImageDraw
-            import math
-            
-            size = 64
-            img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(img)
-            
-            center = size // 2
-            for y in range(size):
-                for x in range(size):
-                    distance = math.sqrt((x - center)**2 + (y - center)**2)
-                    max_distance = math.sqrt(2) * center
-                    ratio = min(distance / max_distance, 1.0)
-                    
-                    start_color = (25, 25, 112)
-                    end_color = (30, 144, 255)
-                    
-                    r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
-                    g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
-                    b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
-                    
-                    img.putpixel((x, y), (r, g, b, 255))
-            
-            key_color = (255, 255, 255, 255)
-            draw.rectangle([18, 28, 48, 36], fill=key_color)
-            draw.ellipse([12, 22, 32, 42], fill=key_color)
-            draw.ellipse([16, 26, 28, 38], outline=(25, 25, 112), width=2)
-            draw.rectangle([42, 24, 48, 28], fill=key_color)
-            draw.rectangle([42, 36, 48, 40], fill=key_color)
-            
-            img.save('icon.ico', format='ICO', sizes=[(64, 64), (32, 32), (16, 16)])
-            img.resize((32, 32)).save('icon_32x32.png')
-            print('Icon created successfully')
-        except Exception as e:
-            print(f'Icon creation failed: {e}')
-        "
+        if (Test-Path "icon.ico") {
+          Write-Host "icon.ico found"
+        } else {
+          Write-Host "icon.ico not found, building without icon"
+        }
+        if (Test-Path "icon_32x32.png") {
+          Write-Host "icon_32x32.png found"
+        } else {
+          Write-Host "icon_32x32.png not found"
+        }
     
     - name: Build exe
       run: |
-        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
+        if (Test-Path "icon.ico") {
+          Write-Host "Building with icon..."
+          python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
+        } else {
+          Write-Host "Building without icon..."
+          python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
+        }
     
     - name: Test exe
       run: |
