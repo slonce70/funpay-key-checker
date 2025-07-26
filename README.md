@@ -7,7 +7,7 @@
 
 Современное GUI приложение для анализа проданных ключей на FunPay с красивым интерфейсом и возможностью создания exe файла.
 
-![Screenshot](https://via.placeholder.com/800x500/2b2b2b/ffffff?text=FunPay+Key+Checker+GUI)
+![FunPay Key Checker](./screenshots/main-interface.png)
 
 ## ✨ Особенности
 
@@ -26,13 +26,13 @@
 <summary>Нажмите чтобы посмотреть скриншоты</summary>
 
 ### Главное окно - Настройки
-![Settings](https://via.placeholder.com/600x400/2b2b2b/ffffff?text=Settings+Tab)
+![Settings Tab](./screenshots/settings-tab.png)
 
 ### Анализ с прогрессом
-![Analysis](https://via.placeholder.com/600x400/2b2b2b/ffffff?text=Analysis+Tab)
+![Analysis Tab](./screenshots/analysis-tab.png)
 
 ### Результаты и статистика
-![Results](https://via.placeholder.com/600x400/2b2b2b/ffffff?text=Results+Tab)
+![Results Tab](./screenshots/results-tab.png)
 
 </details>
 
