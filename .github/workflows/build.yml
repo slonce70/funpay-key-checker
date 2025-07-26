@@ -4,50 +4,10 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Test import
-      run: |
-        python -c "import tkinter; print('tkinter OK')"
-        python -c "import customtkinter; print('customtkinter OK')"
-        python -c "from bs4 import BeautifulSoup; print('beautifulsoup4 OK')"
-    
-    - name: Test GUI creation (headless)
-      run: |
-        python -c "
-        import os
-        os.environ['DISPLAY'] = ':99'
-        try:
-            from gui_main import FunPayKeyChecker
-            print('GUI import OK')
-        except Exception as e:
-            print(f'GUI test failed: {e}')
-        "
-
   build-exe:
-    needs: test
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v')
     
@@ -62,51 +22,23 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
-    
-    - name: Check icon files
-      run: |
-        if (Test-Path "icon.ico") {
-          Write-Host "icon.ico found"
-        } else {
-          Write-Host "icon.ico not found, building without icon"
-        }
-        if (Test-Path "icon_32x32.png") {
-          Write-Host "icon_32x32.png found"
-        } else {
-          Write-Host "icon_32x32.png not found"
-        }
+        pip install FunPayAPI beautifulsoup4 customtkinter pyinstaller Pillow
     
     - name: Build exe
       run: |
-        if (Test-Path "icon.ico") {
-          Write-Host "Building with icon..."
-          python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
-        } else {
-          Write-Host "Building without icon..."
-          python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
-        }
+        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
     
-    - name: Test exe
+    - name: Check exe
       run: |
         if (Test-Path "dist/FunPayKeyChecker.exe") {
-          Write-Host "EXE file created successfully"
           $size = (Get-Item "dist/FunPayKeyChecker.exe").Length / 1MB
-          Write-Host "EXE size: $([math]::Round($size, 1)) MB"
+          Write-Host "✅ EXE created successfully! Size: $([math]::Round($size, 1)) MB"
         } else {
-          Write-Error "EXE file not found"
+          Write-Error "❌ EXE file not found"
           exit 1
         }
     
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: FunPayKeyChecker-exe
-        path: dist/FunPayKeyChecker.exe
-    
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
         files: dist/FunPayKeyChecker.exe
@@ -120,9 +52,6 @@ jobs:
           1. Скачайте FunPayKeyChecker.exe
           2. Запустите файл
           3. Настройте Golden Key в первой вкладке
-          
-          ### ✨ Что нового
-          См. [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
           
           ### 🐛 Сообщить об ошибке
           [Создать Issue](https://github.com/${{ github.repository }}/issues/new)
