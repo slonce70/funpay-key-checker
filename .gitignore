@@ -173,11 +173,7 @@ config.ini
 all_keys_*.txt
 duplicates_*.txt
 
-# Keep screenshots for documentation
-!screenshots/
-!screenshots/*.png
-!screenshots/*.jpg
-!screenshots/*.jpeg
+
 
 # Temporary files
 temp/
