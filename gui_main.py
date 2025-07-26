@@ -42,6 +42,7 @@ class FunPayKeyChecker:
         
         self.account = None
         self.is_running = False
+        self.is_paused = False
         self.all_sold_keys = []
         
         self.setup_gui()
@@ -50,47 +51,28 @@ class FunPayKeyChecker:
     def setup_icon(self):
         """Настройка иконки для окна программы"""
         try:
-            # Сначала пытаемся создать иконку если её нет
+            # Создаем иконку если её нет
             if not os.path.exists("icon.ico"):
                 self.create_icon_programmatically()
             
-            # Устанавливаем иконку для окна - несколько способов для надежности
+            # Устанавливаем иконку только если файл существует
             if os.path.exists("icon.ico"):
-                # Способ 1: стандартный iconbitmap
                 try:
                     self.root.iconbitmap("icon.ico")
-                except:
-                    pass
-                
-                # Способ 2: через wm_iconbitmap (для некоторых версий tkinter)
-                try:
-                    self.root.wm_iconbitmap("icon.ico")
-                except:
-                    pass
-                
-                # Способ 3: через PhotoImage (для PNG)
-                try:
-                    if os.path.exists("icon_32x32.png"):
-                        icon_photo = tk.PhotoImage(file="icon_32x32.png")
-                        self.root.iconphoto(True, icon_photo)
-                        # Сохраняем ссылку чтобы не удалилась из памяти
-                        self.icon_photo = icon_photo
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Предупреждение: не удалось установить иконку .ico: {e}")
                     
-            elif os.path.exists("icon.png"):
-                # Если ico нет, но есть png, конвертируем
+            # Альтернативный способ через PNG
+            if os.path.exists("icon_32x32.png"):
                 try:
-                    from PIL import Image
-                    img = Image.open("icon.png")
-                    img.save("icon.ico", format='ICO', sizes=[(32, 32), (16, 16)])
-                    self.root.iconbitmap("icon.ico")
-                except:
-                    pass
+                    icon_photo = tk.PhotoImage(file="icon_32x32.png")
+                    self.root.iconphoto(True, icon_photo)
+                    self.icon_photo = icon_photo  # Сохраняем ссылку
+                except Exception as e:
+                    print(f"Предупреждение: не удалось установить иконку .png: {e}")
                     
         except Exception as e:
-            # Если не удалось установить иконку, продолжаем без неё
-            print(f"Не удалось установить иконку: {e}")
+            print(f"Предупреждение: проблемы с иконкой: {e}")
     
     def force_icon_update(self):
         """Принудительное обновление иконки после создания GUI"""
@@ -108,52 +90,34 @@ class FunPayKeyChecker:
         """Создание иконки программно если файла нет"""
         try:
             from PIL import Image, ImageDraw
-            import math
             
-            # Создаем простую иконку 64x64
-            size = 64
-            img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+            # Создаем простую иконку 32x32
+            size = 32
+            img = Image.new('RGB', (size, size), (30, 144, 255))  # Синий фон
             draw = ImageDraw.Draw(img)
             
-            # Градиентный фон
-            center = size // 2
-            for y in range(size):
-                for x in range(size):
-                    distance = math.sqrt((x - center)**2 + (y - center)**2)
-                    max_distance = math.sqrt(2) * center
-                    ratio = min(distance / max_distance, 1.0)
-                    
-                    start_color = (25, 25, 112)  # MidnightBlue
-                    end_color = (30, 144, 255)   # DodgerBlue
-                    
-                    r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
-                    g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
-                    b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
-                    
-                    img.putpixel((x, y), (r, g, b, 255))
+            # Простой белый ключ
+            key_color = (255, 255, 255)
             
-            # Простой ключ
-            key_color = (255, 255, 255, 255)
+            # Основа ключа (горизонтальная линия)
+            draw.rectangle([8, 14, 24, 18], fill=key_color)
             
-            # Основа ключа
-            draw.rectangle([18, 28, 48, 36], fill=key_color)
-            
-            # Головка ключа
-            draw.ellipse([12, 22, 32, 42], fill=key_color)
-            draw.ellipse([16, 26, 28, 38], outline=(25, 25, 112), width=2)
+            # Головка ключа (круг)
+            draw.ellipse([6, 10, 16, 20], fill=key_color)
+            draw.ellipse([8, 12, 14, 18], fill=(30, 144, 255))  # Отверстие
             
             # Зубцы
-            draw.rectangle([42, 28, 48, 24], fill=key_color)
-            draw.rectangle([42, 36, 48, 40], fill=key_color)
+            draw.rectangle([20, 14, 24, 12], fill=key_color)
+            draw.rectangle([20, 18, 24, 20], fill=key_color)
             
-            # Сохраняем
-            img.save('icon.ico', format='ICO', sizes=[(64, 64), (32, 32), (16, 16)])
+            # Сохраняем как ICO и PNG
+            img.save('icon.ico', format='ICO', sizes=[(32, 32), (16, 16)])
+            img.save('icon_32x32.png', format='PNG')
             
         except ImportError:
-            # Если PIL не установлен, создаем базовую иконку
-            pass
-        except Exception:
-            pass
+            print("PIL не установлен, иконка не создана")
+        except Exception as e:
+            print(f"Ошибка создания иконки: {e}")
         
     def setup_gui(self):
         """Создание интерфейса"""
@@ -316,6 +280,10 @@ class FunPayKeyChecker:
                                         command=self.stop_analysis, state="disabled")
             self.stop_btn.pack(side="left", padx=10)
             
+            self.pause_btn = ctk.CTkButton(control_frame, text="⏸️ Пауза", 
+                                         command=self.pause_analysis, state="disabled")
+            self.pause_btn.pack(side="left", padx=10)
+            
             self.clear_log_btn = ctk.CTkButton(control_frame, text="🗑️ Очистить лог", 
                                              command=self.clear_log)
             self.clear_log_btn.pack(side="right", padx=10)
@@ -402,17 +370,27 @@ class FunPayKeyChecker:
             
             try:
                 if MODERN_GUI:
-                    self.golden_key_entry.insert(0, config["FunPay"]["golden_key"])
-                    self.user_agent_entry.insert(0, config["FunPay"]["user_agent"])
-                    self.min_delay_var.set(config["Safety"]["min_delay_sec"])
-                    self.max_delay_var.set(config["Safety"]["max_delay_sec"])
+                    # Загружаем Golden Key
+                    golden_key = config.get("FunPay", "golden_key", fallback="")
+                    if golden_key:
+                        self.golden_key_entry.insert(0, golden_key)
                     
-                    if "order_limit" in config["Safety"]:
-                        self.order_limit_var.set(config["Safety"]["order_limit"])
-                    if "page_limit" in config["Safety"]:
-                        self.page_limit_var.set(config["Safety"]["page_limit"])
-            except KeyError:
-                self.log_message("Ошибка в файле конфигурации")
+                    # Загружаем User Agent
+                    user_agent = config.get("FunPay", "user_agent", fallback="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    self.user_agent_entry.insert(0, user_agent)
+                    
+                    # Загружаем настройки безопасности
+                    self.min_delay_var.set(config.get("Safety", "min_delay_sec", fallback="2"))
+                    self.max_delay_var.set(config.get("Safety", "max_delay_sec", fallback="5"))
+                    self.order_limit_var.set(config.get("Safety", "order_limit", fallback="0"))
+                    self.page_limit_var.set(config.get("Safety", "page_limit", fallback="0"))
+                    
+            except Exception as e:
+                self.log_message(f"Ошибка при загрузке конфигурации: {e}")
+        else:
+            # Устанавливаем значения по умолчанию
+            if MODERN_GUI:
+                self.user_agent_entry.insert(0, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
     def save_config(self):
         """Сохранение конфигурации"""
@@ -444,21 +422,32 @@ class FunPayKeyChecker:
                 self.log_message("Тестирование подключения...")
                 
                 if MODERN_GUI:
-                    golden_key = self.golden_key_entry.get()
-                    user_agent = self.user_agent_entry.get()
+                    golden_key = self.golden_key_entry.get().strip()
+                    user_agent = self.user_agent_entry.get().strip()
                 
                 if not golden_key or "ВАШ_GOLDEN_KEY_СЮДА" in golden_key:
                     self.log_message("❌ Ошибка: Укажите корректный Golden Key")
                     return
                 
-                account = FunPayAPI.Account(golden_key=golden_key, user_agent=user_agent)
+                # Очищаем User-Agent от недопустимых символов
+                user_agent_clean = user_agent.encode('ascii', 'ignore').decode('ascii')
+                if not user_agent_clean:
+                    user_agent_clean = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                
+                self.log_message(f"🔑 Используется Golden Key: {golden_key[:10]}...")
+                self.log_message(f"🌐 User Agent: {user_agent_clean[:50]}...")
+                
+                account = FunPayAPI.Account(golden_key=golden_key, user_agent=user_agent_clean)
                 account.get()
                 
                 self.log_message(f"✅ Подключение успешно! Пользователь: {account.username} (ID: {account.id})")
                 self.account = account
                 
-            except exceptions.InvalidGoldenKey:
-                self.log_message("❌ Ошибка: Неверный Golden Key")
+            except exceptions.UnauthorizedError:
+                self.log_message("❌ Ошибка: Неверный Golden Key или проблемы с авторизацией")
+            except UnicodeEncodeError as e:
+                self.log_message(f"❌ Ошибка кодировки User-Agent: {e}")
+                self.log_message("💡 Попробуйте использовать стандартный User-Agent без специальных символов")
             except Exception as e:
                 self.log_message(f"❌ Ошибка подключения: {e}")
         
@@ -484,8 +473,10 @@ class FunPayKeyChecker:
             return
         
         self.is_running = True
+        self.is_paused = False
         self.start_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
+        self.pause_btn.configure(state="normal")
         self.all_sold_keys = []
         
         # Очищаем таблицу результатов
@@ -499,8 +490,10 @@ class FunPayKeyChecker:
                 self.log_message(f"❌ Критическая ошибка: {e}")
             finally:
                 self.is_running = False
+                self.is_paused = False
                 self.start_btn.configure(state="normal")
                 self.stop_btn.configure(state="disabled")
+                self.pause_btn.configure(state="disabled")
                 self.progress_bar.set(0)
         
         threading.Thread(target=analysis_thread, daemon=True).start()
@@ -508,11 +501,28 @@ class FunPayKeyChecker:
     def stop_analysis(self):
         """Остановка анализа"""
         self.is_running = False
+        self.is_paused = False
         self.log_message("🛑 Анализ остановлен пользователем")
+    
+    def pause_analysis(self):
+        """Пауза/возобновление анализа"""
+        if self.is_paused:
+            self.is_paused = False
+            self.pause_btn.configure(text="⏸️ Пауза")
+            self.log_message("▶️ Анализ возобновлен")
+        else:
+            self.is_paused = True
+            self.pause_btn.configure(text="▶️ Продолжить")
+            self.log_message("⏸️ Анализ приостановлен")
     
     def run_analysis(self, game_id, lot_name):
         """Основная логика анализа"""
         try:
+            # Проверяем, что аккаунт инициализирован
+            if not self.account:
+                self.log_message("❌ Ошибка: Аккаунт не инициализирован. Сначала протестируйте подключение!")
+                return
+            
             # Получение настроек
             min_delay = float(self.min_delay_var.get())
             max_delay = float(self.max_delay_var.get())
@@ -532,34 +542,56 @@ class FunPayKeyChecker:
             page_num = 1
             
             while self.is_running:
+                # Проверка паузы
+                while self.is_paused and self.is_running:
+                    time.sleep(0.1)
+                
+                if not self.is_running:
+                    break
                 self.log_message(f"📄 Загружаю страницу {page_num}...")
                 
-                next_start_from, orders_batch = self.account.get_sells(
-                    start_from=start_from,
-                    game=game_id,
-                    state="closed",
-                    include_paid=False,
-                    include_refunded=False
-                )
-                
-                if not orders_batch:
+                try:
+                    next_start_from, orders_batch = self.account.get_sells(
+                        start_from=start_from,
+                        game=game_id,
+                        state="closed",
+                        include_paid=False,
+                        include_refunded=False
+                    )
+                    
+                    if not orders_batch:
+                        self.log_message("ℹ️ Больше заказов не найдено")
+                        break
+                    
+                    all_orders.extend(orders_batch)
+                    self.log_message(f"✅ Загружено {len(orders_batch)} заказов (всего: {len(all_orders)})")
+                    
+                    if not next_start_from:
+                        self.log_message("ℹ️ Достигнут конец списка заказов")
+                        break
+                    
+                    # Проверяем лимит страниц
+                    if page_limit and page_num >= page_limit:
+                        self.log_message(f"⚠️ Достигнут лимит страниц: {page_limit}")
+                        break
+                    
+                    start_from = next_start_from
+                    page_num += 1
+                    
+                    # Задержка с отображением
+                    delay = random.uniform(min_delay, max_delay)
+                    self.log_message(f"⏳ Задержка {delay:.1f} сек...")
+                    time.sleep(delay)
+                    
+                except exceptions.RequestFailedError as e:
+                    self.log_message(f"❌ Ошибка запроса на странице {page_num}: {e}")
+                    self.log_message("⏳ Увеличиваю задержку и повторяю...")
+                    time.sleep(min_delay * 2)
+                    continue
+                    
+                except Exception as e:
+                    self.log_message(f"❌ Неожиданная ошибка на странице {page_num}: {e}")
                     break
-                
-                all_orders.extend(orders_batch)
-                self.log_message(f"✅ Загружено {len(orders_batch)} заказов")
-                
-                if not next_start_from:
-                    break
-                
-                # Проверяем лимит страниц
-                if page_limit and page_num >= page_limit:
-                    self.log_message(f"⚠️ Достигнут лимит страниц: {page_limit}")
-                    break
-                
-                start_from = next_start_from
-                page_num += 1
-                
-                time.sleep(random.uniform(min_delay, max_delay))
             
             if not self.is_running:
                 return
@@ -589,6 +621,10 @@ class FunPayKeyChecker:
             # Анализ заказов
             processed = 0
             for order_header in target_orders:
+                # Проверка паузы
+                while self.is_paused and self.is_running:
+                    time.sleep(0.1)
+                
                 if not self.is_running:
                     return
                 
@@ -600,7 +636,9 @@ class FunPayKeyChecker:
                 self.log_message(f"🔍 Анализ заказа {order_header.id} ({processed}/{len(target_orders)})")
                 
                 try:
-                    time.sleep(random.uniform(min_delay, max_delay))
+                    # Задержка перед запросом
+                    delay = random.uniform(min_delay, max_delay)
+                    time.sleep(delay)
                     
                     full_order = self.account.get_order(order_header.id)
                     if full_order and hasattr(full_order, 'html') and full_order.html:
@@ -615,14 +653,36 @@ class FunPayKeyChecker:
                                     'date': getattr(order_header, 'created_at', 'Неизвестно')
                                 })
                         else:
-                            self.log_message("⚠️ Ключи не найдены")
+                            self.log_message("⚠️ Ключи не найдены в заказе")
+                    else:
+                        self.log_message("⚠️ Не удалось получить содержимое заказа")
+                    
+                except exceptions.RequestFailedError as e:
+                    self.log_message(f"❌ Ошибка запроса заказа {order_header.id}: {e}")
+                    # Увеличиваем задержку при ошибке
+                    time.sleep(min_delay * 2)
+                    
+                except exceptions.UnauthorizedError:
+                    self.log_message("❌ Ошибка авторизации. Проверьте Golden Key")
+                    break
                     
                 except Exception as e:
-                    self.log_message(f"❌ Ошибка при обработке заказа {order_header.id}: {e}")
+                    self.log_message(f"❌ Неожиданная ошибка при обработке заказа {order_header.id}: {e}")
             
             # Обновление результатов
             self.update_results()
-            self.log_message(f"🎉 Анализ завершен! Найдено {len(self.all_sold_keys)} ключей")
+            
+            # Финальная статистика
+            total_keys = len(self.all_sold_keys)
+            unique_keys = len(set(k['key'] for k in self.all_sold_keys))
+            duplicates = total_keys - unique_keys
+            
+            self.log_message(f"🎉 Анализ завершен!")
+            self.log_message(f"📊 Всего ключей: {total_keys}")
+            self.log_message(f"🔑 Уникальных: {unique_keys}")
+            self.log_message(f"👥 Дубликатов: {duplicates}")
+            self.log_message(f"📄 Обработано страниц: {page_num - 1}")
+            self.log_message(f"📦 Найдено подходящих заказов: {len(target_orders)}")
             
         except Exception as e:
             self.log_message(f"❌ Критическая ошибка: {e}")
@@ -634,15 +694,44 @@ class FunPayKeyChecker:
             soup = BeautifulSoup(html, 'html.parser')
             
             keys = []
-            secret_elements = soup.find_all('span', class_='secret-placeholder')
             
+            # Основной способ - поиск по классу secret-placeholder
+            secret_elements = soup.find_all('span', class_='secret-placeholder')
             for element in secret_elements:
                 key = element.get_text().strip()
-                if key and len(key) > 10:
+                if key and len(key) > 5:  # Уменьшили минимальную длину
                     keys.append(key)
             
-            return keys
-        except Exception:
+            # Дополнительный поиск - по другим возможным классам
+            if not keys:
+                # Поиск по другим классам, которые могут содержать ключи
+                other_selectors = [
+                    'span.secret',
+                    'div.secret-placeholder',
+                    'code',
+                    'pre',
+                    'span[style*="font-family: monospace"]'
+                ]
+                
+                for selector in other_selectors:
+                    elements = soup.select(selector)
+                    for element in elements:
+                        key = element.get_text().strip()
+                        if key and len(key) > 5 and len(key) < 200:  # Разумные ограничения
+                            keys.append(key)
+            
+            # Удаляем дубликаты, сохраняя порядок
+            seen = set()
+            unique_keys = []
+            for key in keys:
+                if key not in seen:
+                    seen.add(key)
+                    unique_keys.append(key)
+            
+            return unique_keys
+            
+        except Exception as e:
+            print(f"Ошибка извлечения ключей: {e}")
             return []
     
     def update_results(self):

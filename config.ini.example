@@ -1,0 +1,9 @@
+[FunPay]
+golden_key = YOUR_GOLDEN_KEY_HERE
+user_agent = Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+
+[Safety]
+min_delay_sec = 2
+max_delay_sec = 5
+order_limit = 0
+page_limit = 0
