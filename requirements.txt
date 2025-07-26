@@ -1,0 +1,13 @@
+# Core dependencies
+FunPayAPI>=1.0.0
+beautifulsoup4>=4.12.0
+customtkinter>=5.2.0
+
+# For building exe
+pyinstaller>=6.0.0
+
+# For icon creation
+Pillow>=10.0.0
+
+# Optional: for better performance
+lxml>=4.9.0
