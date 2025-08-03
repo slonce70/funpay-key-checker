@@ -9,6 +9,15 @@ import sys
 import time
 from datetime import datetime
 
+# Workaround for PyInstaller onefile mode with customtkinter
+application_path = ''
+if getattr(sys, 'frozen', False):
+    application_path = sys._MEIPASS
+else:
+    application_path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(application_path)
+sys.path.append(application_path)
+
 # Импорт для FunPay API
 try:
     import FunPayAPI
