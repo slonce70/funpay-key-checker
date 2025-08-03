@@ -22,9 +22,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyinstaller
         echo "Installed packages:"
         pip list | findstr -i "funpay customtkinter pyinstaller pillow beautifulsoup"
+        echo "Python and pip versions:"
+        python --version
+        pip --version
     
     - name: Create icon if missing
       run: |
