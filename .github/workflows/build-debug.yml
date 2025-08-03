@@ -1,0 +1,109 @@
+name: Build Debug
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug-build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Debug environment
+      run: |
+        echo "=== Environment Debug ==="
+        python --version
+        pip --version
+        echo "Current directory:"
+        Get-Location
+        echo "Files in current directory:"
+        Get-ChildItem
+        echo "Python path:"
+        python -c "import sys; print('\n'.join(sys.path))"
+    
+    - name: Install dependencies step by step
+      run: |
+        echo "=== Installing dependencies ==="
+        python -m pip install --upgrade pip
+        echo "Installing FunPayAPI..."
+        pip install "FunPayAPI>=1.0.0"
+        echo "Installing beautifulsoup4..."
+        pip install "beautifulsoup4>=4.12.0"
+        echo "Installing customtkinter..."
+        pip install "customtkinter>=5.2.0"
+        echo "Installing Pillow..."
+        pip install "Pillow>=10.0.0"
+        echo "Installing PyInstaller..."
+        pip install "pyinstaller>=6.0.0"
+        echo "Installing lxml..."
+        pip install "lxml>=4.9.0"
+        
+        echo "=== Checking installations ==="
+        pip list
+        
+        echo "=== Testing imports ==="
+        python -c "import FunPayAPI; print('✅ FunPayAPI OK')"
+        python -c "import bs4; print('✅ BeautifulSoup4 OK')"
+        python -c "import customtkinter; print('✅ CustomTkinter OK')"
+        python -c "import PIL; print('✅ Pillow OK')"
+        python -c "import PyInstaller; print('✅ PyInstaller OK')"
+    
+    - name: Create icon
+      run: |
+        echo "=== Creating icon ==="
+        if (-not (Test-Path "icon.ico")) {
+          python create_icon.py
+        }
+        if (Test-Path "icon.ico") { echo "✅ Icon exists" } else { echo "❌ Icon missing" }
+    
+    - name: Test PyInstaller
+      run: |
+        echo "=== Testing PyInstaller ==="
+        python -m PyInstaller --version
+        echo "Creating spec file..."
+        python -m PyInstaller --name=FunPayKeyChecker gui_main.py --dry-run
+        
+    - name: Build with minimal options
+      run: |
+        echo "=== Building with minimal options ==="
+        python -m PyInstaller --onefile --name=FunPayKeyChecker gui_main.py
+        if (Test-Path "dist/FunPayKeyChecker.exe") { 
+          echo "✅ Minimal build successful"
+          $size = (Get-Item "dist/FunPayKeyChecker.exe").Length / 1MB
+          echo "Size: $([math]::Round($size, 1)) MB"
+        } else { 
+          echo "❌ Minimal build failed" 
+        }
+    
+    - name: Build with full options
+      run: |
+        echo "=== Building with full options ==="
+        Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+        Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --hidden-import=PIL --hidden-import=tkinter --collect-all=customtkinter --clean --noconfirm gui_main.py
+        
+        if (Test-Path "dist/FunPayKeyChecker.exe") { 
+          echo "✅ Full build successful"
+          $size = (Get-Item "dist/FunPayKeyChecker.exe").Length / 1MB
+          echo "Size: $([math]::Round($size, 1)) MB"
+        } else { 
+          echo "❌ Full build failed"
+          echo "Checking for errors..."
+          if (Test-Path "build") { Get-ChildItem build -Recurse }
+        }
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: debug-artifacts
+        path: |
+          dist/
+          build/
+          *.spec
