@@ -23,16 +23,23 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+        echo "Installed packages:"
+        pip list | findstr -i "funpay customtkinter pyinstaller pillow beautifulsoup"
     
     - name: Create icon if missing
       run: |
-        if (-not (Test-Path "icon.ico")) {
-          python create_icon.py
-        }
+        echo "Checking files..."
+        if (Test-Path "gui_main.py") { echo "✅ gui_main.py exists" } else { echo "❌ gui_main.py missing" }
+        if (Test-Path "icon.ico") { echo "✅ icon.ico exists" } else { echo "❌ icon.ico missing, creating..." ; python create_icon.py }
+        if (Test-Path "requirements.txt") { echo "✅ requirements.txt exists" } else { echo "❌ requirements.txt missing" }
     
     - name: Build exe
       run: |
-        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --hidden-import=PIL --clean --noconfirm gui_main.py
+        echo "Starting PyInstaller build..."
+        python -m PyInstaller --version
+        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --hidden-import=PIL --hidden-import=tkinter --collect-all=customtkinter --clean --noconfirm gui_main.py
+        echo "Build completed, checking results..."
+        if (Test-Path "dist") { echo "✅ dist folder exists" ; Get-ChildItem dist } else { echo "❌ dist folder missing" }
     
     - name: Check exe
       run: |
