@@ -172,8 +172,7 @@ config.ini
 *_keys.txt
 all_keys_*.txt
 duplicates_*.txt
-
-
+unique_keys_*.txt
 
 # Temporary files
 temp/
@@ -191,3 +190,7 @@ tmp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# IDE files
+*.pyc
+__pycache__/

@@ -9,7 +9,6 @@ on:
 jobs:
   build-exe:
     runs-on: windows-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
     - uses: actions/checkout@v4
@@ -22,11 +21,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install FunPayAPI beautifulsoup4 customtkinter pyinstaller Pillow
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Create icon if missing
+      run: |
+        if (-not (Test-Path "icon.ico")) {
+          python create_icon.py
+        }
     
     - name: Build exe
       run: |
-        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --clean --noconfirm gui_main.py
+        python -m PyInstaller --onefile --windowed --name=FunPayKeyChecker --icon=icon.ico --hidden-import=customtkinter --hidden-import=FunPayAPI --hidden-import=bs4 --hidden-import=PIL --clean --noconfirm gui_main.py
     
     - name: Check exe
       run: |
@@ -53,11 +59,14 @@ jobs:
           2. Запустите файл
           3. Настройте Golden Key в первой вкладке
           
+          ### ✨ Особенности
+          - Современный GUI с темной темой
+          - Умный поиск ключей в заказах FunPay
+          - Экспорт результатов в разных форматах
+          - Защита от блокировки API
+          
           ### 🐛 Сообщить об ошибке
           [Создать Issue](https://github.com/${{ github.repository }}/issues/new)
-          
-          ### 👤 Разработчик
-          @slonce70
         draft: false
         prerelease: false
       env:
