@@ -50,7 +50,7 @@ def build_exe():
     
     # Параметры для PyInstaller
     cmd = [
-        "python", "-m", "PyInstaller",
+        sys.executable, "-m", "PyInstaller",
         "--onefile",                    # Один exe файл
         "--windowed",                   # Без консоли
         "--name=FunPayKeyChecker",      # Имя exe файла
@@ -102,7 +102,7 @@ def build_portable():
     print("📦 Создаю портативную версию...")
     
     cmd = [
-        "python", "-m", "PyInstaller",
+        sys.executable, "-m", "PyInstaller",
         "--onedir",                     # Папка с файлами
         "--windowed",                   # Без консоли
         "--name=FunPayKeyChecker",      # Имя папки

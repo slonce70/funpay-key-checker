@@ -441,8 +441,12 @@ class FunPayKeyChecker:
                 # Очищаем User-Agent от недопустимых символов
                 user_agent_clean = user_agent.encode('ascii', 'ignore').decode('ascii')
                 if not user_agent_clean:
-                    user_agent_clean = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                
+                    user_agent_clean = (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    )
+
                 self.log_message(f"🔑 Используется Golden Key: {golden_key[:10]}...")
                 self.log_message(f"🌐 User Agent: {user_agent_clean[:50]}...")
                 
